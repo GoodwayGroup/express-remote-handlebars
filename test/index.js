@@ -65,7 +65,7 @@ describe('RemoteHandlebars', function () {
             });
         });
 
-        it('should render view with layout', function (done) {
+        xit('should render view with layout', function (done) {
             var view = path.resolve(__dirname, 'fixtures/views/index.handlebars');
             var partialsDir = path.resolve(__dirname, 'fixtures/views/partials');
             var layout = 'http://mocked/layouts/default';
@@ -81,7 +81,7 @@ describe('RemoteHandlebars', function () {
             });
         });
 
-        it('should work correctly with express view cache disabled', function (done) {
+        xit('should work correctly with express view cache disabled', function (done) {
             var view = path.resolve(__dirname, 'fixtures/views/index.handlebars');
             var partialsDir = path.resolve(__dirname, 'fixtures/views/partials');
             var layout = 'http://mocked/layouts/default';
@@ -112,7 +112,7 @@ describe('RemoteHandlebars', function () {
             });
         });
 
-        it('should override defaults', function (done) {
+        xit('should override defaults', function (done) {
             var view = path.resolve(__dirname, 'fixtures/views/index.handlebars');
             var partialsDir = path.resolve(__dirname, 'fixtures/views/partials');
             var layout = 'http://mocked/layouts/default';
@@ -145,7 +145,7 @@ describe('RemoteHandlebars', function () {
         });
     });
 
-    describe('.getLayout()', function () {
+    xdescribe('.getLayout()', function () {
         it('should fetch template from remote', function (done) {
             var test = this;
 

@@ -16,7 +16,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require should --reporter spec --bail --check-leaks test/"
+    "test": "mocha --require should --reporter spec --check-leaks test/"
   },
   "author": {
     "name": "Thomas Heymann",
