@@ -108,8 +108,8 @@ RemoteHandlebars.prototype.getView = function getView(filePath, options, callbac
         callback = options;
         options = null;
     }
-    if(filePath.toLowerCase().indexOf("http") === 0){
-        var url = {url: filePath};
+    if (filePath.toLowerCase().indexOf("http") === 0) {
+        var url = { url: filePath };
         url.headers || (url.headers = {});
         url.headers['Accept'] = 'text/x-handlebars-template';
 
@@ -123,7 +123,7 @@ RemoteHandlebars.prototype.getView = function getView(filePath, options, callbac
         function requestTemplate(key, done) {
             self.requestTemplate(url, done);
         }
-    } else{
+    } else {
 
         filePath = path.resolve(filePath);
         options || (options = {});
@@ -181,7 +181,7 @@ RemoteHandlebars.prototype.requestTemplate = function requestTemplate(url, callb
     var self = this;
     self.request(url, function (error, response, body) {
         if (error) return callback(error);
-        if (response.statusCode >= 400) return callback(new Error('HTTP status code \''+response.statusCode+'\' received'));
+        if (response.statusCode >= 400) return callback(new Error('HTTP status code \'' + response.statusCode + '\' received'));
         var template = self.compile(body);
         var cacheControl = response.headers['cache-control'];
         callback(null, template, cacheControl);
@@ -197,15 +197,29 @@ RemoteHandlebars.prototype.readTemplate = function readTemplate(filePath, callba
     });
 };
 
+/**
+ * This function load up paritals handlebars templates from disk.
+ * We found a timeing issues where a temporary partial
+ * can be included in the recursive glob pattern and then be
+ * deleted from disk by another async request before the file can be read.
+ * When we incounter this error we will skip the file and continue.
+ */
 RemoteHandlebars.prototype.findTemplates = function findTemplates(paths, callback) {
     var self = this;
     async.reduce(paths, {}, function (templates, dir, nextDir) {
-        glob('**/*.{handlebars,hbs}', {cwd: dir}, function (error, files) {
+        glob('**/*.{handlebars,hbs}', { cwd: dir }, function (error, files) {
             if (error) return nextDir(error);
             async.each(files, function (file, nextFile) {
                 var filePath = path.resolve(dir, file);
                 self.readTemplate(filePath, function (error, template) {
-                    if (error) return nextFile(error);
+                    if (error) {
+                        if (filePath.indexOf("temp/tmp") >= 0) {
+                            //Skip errros with temporary partial files in a temp directory
+                            return nextFile();
+                        } else {
+                            return nextFile(error);
+                        }
+                    }
                     var name = file.replace(/\.(handlebars|hbs)$/, '');
                     templates[name] = template;
                     nextFile();

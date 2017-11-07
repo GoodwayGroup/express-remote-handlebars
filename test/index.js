@@ -4,6 +4,8 @@ var path = require('path');
 var remoteHandlebars = require('..');
 var nock = require('nock');
 var should = require('should');
+var sinon = require('sinon');
+var fs = require('graceful-fs');
 
 describe('RemoteHandlebars', function () {
     beforeEach(function () {
@@ -348,6 +350,64 @@ describe('RemoteHandlebars', function () {
             var template = remoteHandlebars.create().compile('<main>{{{content}}}</main>');
             var rendered = template({content: '<p>Content</p>'});
             rendered.should.equal('<main><p>Content</p></main>');
+        });
+    });
+
+    describe('.readTemplate()', function () {
+        it('should return compiled handlebars template from disk', function (done) {
+            var template = remoteHandlebars.create().readTemplate(
+                path.resolve(__dirname, 'fixtures/views/layouts/bare.handlebars'),
+                function (error, template) {
+                    var rendered = template({ content: '<p>Content</p>' });
+                    rendered.should.equal('<html>\n<body>\n    <main>\n        <p>Content</p>\n    </main>\n</body>\n</html>');
+                    done();
+                }
+            );
+        });
+
+        it('should error if template is not found', function (done) {
+            var template = remoteHandlebars.create().readTemplate(
+                path.resolve(__dirname, 'fixtures/views/layouts/notfound.handlebars'),
+                function (error, template) {
+                    should.exist(error);
+                    should.not.exist(template);
+
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('.findTemplates()', function () {
+        it('should load templates', (done) => {
+            var template = remoteHandlebars.create().findTemplates(
+                [path.resolve(__dirname, 'fixtures/views/more-partials')],
+                function (error, partials) {
+                    should.not.exist(error);
+                    partials.should.have.properties('sidebar', 'nested/partial');
+                    done();
+                }
+            );
+        });
+
+        it('should load templates and skip missing temp files.', (done) => {
+            var stub = sinon.stub(fs, "readFile").callsFake(function (path, encoding, callback) {
+                if (path.indexOf("temp-partials/partial.handlebars") > 0) {
+                    callback(null, "<br/>");
+                } else {
+                    callback("something bad", null);
+                }
+            });
+
+            var template = remoteHandlebars.create().findTemplates(
+                [path.resolve(__dirname, 'fixtures/views/temp-partials')],
+                function (error, partials) {
+                    should.not.exist(error);
+                    partials.should.have.properties('partial');
+                    fs.readFile.restore();
+                    done();
+                }
+            );
         });
     });
 });
